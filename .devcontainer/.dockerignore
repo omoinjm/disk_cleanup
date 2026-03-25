@@ -1,0 +1,32 @@
+# Extra - Optimized for Dev Containers
+.git/
+.github/
+.vscode/
+.vs/
+.next/
+node_modules/
+
+# Infrastructure/OS Files
+**/.classpath
+**/.project
+**/.settings
+**/.toolstarget
+**/bin
+**/obj
+**/charts
+**/azds.yaml
+
+# Local Secrets & Configs
+**/.env
+**/.env.*
+**/secrets.dev.yaml
+**/values.dev.yaml
+
+# Build-related
+**/docker-compose*
+**/Dockerfile*
+LICENSE
+README.md
+
+# Keep the .gitignore itself but don't dig into .git/
+!**/.gitignore

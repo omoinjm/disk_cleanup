@@ -1,0 +1,49 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
+{
+  "name": "Swipe dev container",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  "workspaceFolder": "/workspaces/disk_cleanup",
+  "postCreateCommand": "bash .devcontainer/scripts/post-create-commands.sh",
+  "postAttachCommand": "bash .devcontainer/scripts/post-attach-commands.sh",
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {}
+  },
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "git.decorations.enabled": true,
+        "git.autofetch": true,
+        "git.confirmSync": false,
+        "git.enableSmartCommit": true
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "github.copilot",
+        "github.codespaces",
+        "hermitter.oh-lucy-vscode",
+        "pkief.material-icon-theme",
+        "devondcarew.bazel-code",
+        "esbenp.prettier-vscode",
+        "ms-vscode-remote.remote-containers"
+      ]
+    }
+  },
+  "runArgs": ["--env-file", ".devcontainer/.env", "--privileged"],
+  "mounts": [
+    "source=/dev,target=/dev,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+    "source=njmtech.disk.cleanup-bashhistory,target=/commandhistory,type=volume"
+  ],
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  "remoteUser": "vscode"
+}
+

@@ -226,6 +226,7 @@ class MountpointResolver:
     ) -> list[str]:
         """
         Extract mount points from an lsblk node.
+        Handles both modern 'mountpoints' (list) and older 'mountpoint' (string).
 
         Args:
             node: Dictionary from lsblk JSON output.
@@ -233,7 +234,17 @@ class MountpointResolver:
         Returns:
             List of mount point paths (empty list for unmounted devices).
         """
+        # Modern lsblk (2.39+)
         mount_points = node.get("mountpoints") or []
+        if isinstance(mount_points, str):
+            mount_points = [mount_points]
+            
+        # Older lsblk (< 2.39)
+        if not mount_points:
+            mp = node.get("mountpoint")
+            if mp:
+                mount_points = [mp]
+                
         # lsblk may return [null] for empty/unmounted devices
         return [m for m in mount_points if m]
 
@@ -308,6 +319,7 @@ class DeviceDiscovery:
     def _fetch_lsblk_json(self) -> dict:
         """
         Run lsblk and return parsed JSON output.
+        Dynamically adjusts columns based on what's available (supports older lsblk).
 
         Returns:
             Dictionary containing lsblk JSON output.
@@ -317,11 +329,26 @@ class DeviceDiscovery:
             subprocess.CalledProcessError: If lsblk fails.
             json.JSONDecodeError: If JSON parsing fails.
         """
+        # Detect available columns to be compatible with older lsblk versions
+        try:
+            help_res = subprocess.run(["lsblk", "--help"], capture_output=True, text=True, check=True)
+            help_out = help_res.stdout
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            help_out = ""
+
+        columns = ["NAME", "SIZE", "MODEL", "VENDOR", "TRAN", "RM", "RO", "HOTPLUG", "SERIAL", "TYPE"]
+        
+        # Check for mount point columns
+        if "MOUNTPOINTS" in help_out:
+            columns.append("MOUNTPOINTS")
+        elif "MOUNTPOINT" in help_out:
+            columns.append("MOUNTPOINT")
+
         cmd = [
             "lsblk",
             "--json",
             "--output",
-            "NAME,SIZE,MODEL,VENDOR,TRAN,RM,RO,MOUNTPOINTS,HOTPLUG,SERIAL,TYPE",
+            ",".join(columns),
             "--bytes",
         ]
         result = subprocess.run(
@@ -362,6 +389,10 @@ class DeviceDiscovery:
         except (ValueError, TypeError):
             size_bytes = 0
 
+        # Human-readable size
+        from safewipe.utils import format_bytes
+        size_str = format_bytes(size_bytes)
+
         # Parse mount points
         mount_points = self.mount_resolver.get_mount_points_from_lsblk(node)
 
@@ -372,7 +403,7 @@ class DeviceDiscovery:
         return BlockDevice(
             name=name,
             path=f"/dev/{name}",
-            size=node.get("size", "?"),
+            size=size_str,
             size_bytes=size_bytes,
             model=(node.get("model") or "").strip(),
             vendor=(node.get("vendor") or "").strip(),

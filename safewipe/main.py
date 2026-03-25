@@ -412,6 +412,7 @@ def cmd_format(
 
 @app.command("auto")
 def cmd_auto(
+    ctx: typer.Context,
     dry_run: bool = typer.Option(False, "--dry-run"),
     force:   bool = typer.Option(False, "--force"),
 ):
@@ -428,7 +429,6 @@ def cmd_auto(
         "This wizard will guide you through wiping and formatting a device.\n"
     )
     # Delegate to wipe (which includes format wizard)
-    ctx = typer.get_current_context()
     ctx.invoke(cmd_wipe, device_path=None, method=None, verify=True,
                dry_run=dry_run, force=force, no_confirm=False, no_format=False)
 
